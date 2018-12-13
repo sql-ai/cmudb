@@ -17,7 +17,16 @@ LRUReplacer<T>::~LRUReplacer() {}
  * Insert value into LRU
  */
 template <typename T>
-void LRUReplacer<T>::Insert(const T &value) {}
+void LRUReplacer<T>::Insert(const T &value)
+{
+  lock_guard<mutex> guard(mu_);
+  if (map_.find(value) != map_.end())
+  {
+    list_.erase(map_[value]);
+  }
+  list_.push_front(value);
+  map_[value] = list_.begin();
+}
 
 /* If LRU is non-empty, pop the head member from LRU to argument "value", and
  * return true. If LRU is empty, return false
@@ -25,7 +34,14 @@ void LRUReplacer<T>::Insert(const T &value) {}
 template <typename T>
 bool LRUReplacer<T>::Victim(T &value)
 {
-  return false;
+  lock_guard<mutex> guard(mu_);
+  if (list_.empty())
+    return false;
+
+  value = list_.back();
+  map_.erase(value);
+  list_.pop_back();
+  return true;
 }
 
 /*
@@ -35,11 +51,22 @@ bool LRUReplacer<T>::Victim(T &value)
 template <typename T>
 bool LRUReplacer<T>::Erase(const T &value)
 {
-  return false;
+  lock_guard<mutex> guard(mu_);
+  if (map_.find(value) == map_.end())
+  {
+    return false;
+  }
+  list_.erase(map_[value]);
+  map_.erase(value);
+  return true;
 }
 
 template <typename T>
-size_t LRUReplacer<T>::Size() { return 0; }
+size_t LRUReplacer<T>::Size()
+{
+  lock_guard<mutex> guard(mu_);
+  return map_.size();
+}
 
 template class LRUReplacer<Page *>;
 // test only

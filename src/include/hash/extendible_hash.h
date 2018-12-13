@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include "hash/hash_table.h"
 #include <cstdlib>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
-#include "hash/hash_table.h"
+using namespace std;
 
 namespace cmudb
 {
@@ -22,6 +26,25 @@ template <typename K, typename V>
 class ExtendibleHash : public HashTable<K, V>
 {
 public:
+  struct Block
+  {
+    int nub;
+    map<K, V> records;
+    Block() : nub(0)
+    {
+      records = map<K, V>();
+    }
+    Block(int j) : Block()
+    {
+      nub = j;
+    }
+    void Clear()
+    {
+      nub = 0;
+      records.clear();
+    }
+  };
+
   // constructor
   ExtendibleHash(size_t size);
   // helper function to generate hash addressing
@@ -36,6 +59,10 @@ public:
   void Insert(const K &key, const V &value) override;
 
 private:
-  // add your own member variables here
+  vector<shared_ptr<Block>> buckets_;
+  int global_depth_;
+  size_t size_;
+  mutex mu_;
+  void SplitBlock(shared_ptr<Block> &block);
 };
 } // namespace cmudb
