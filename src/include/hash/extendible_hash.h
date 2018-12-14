@@ -10,17 +10,17 @@
 #pragma once
 
 #include <cstdlib>
-#include <string>
 #include <vector>
-
+#include <string>
+#include <iostream>
+#include <memory>
+#include <mutex>
 #include "hash/hash_table.h"
 
-namespace cmudb
-{
+namespace cmudb {
 
 template <typename K, typename V>
-class ExtendibleHash : public HashTable<K, V>
-{
+class ExtendibleHash : public HashTable<K, V> {
 public:
   // constructor
   ExtendibleHash(size_t size);
@@ -36,6 +36,39 @@ public:
   void Insert(const K &key, const V &value) override;
 
 private:
+  
+  bool IsIBitOn(int n, int i);
+  void SplitBlocks(size_t id);
+  
+  struct Bucket
+  {
+    int local_depth_;
+    std::vector<std::pair<K, V>> items_;
+    
+    Bucket() 
+    {
+      local_depth_ = 0;
+      items_.clear();
+    }
+    Bucket(const Bucket& b)
+    {
+      items_ = b.items_;
+      local_depth_ = b.local_depth_;
+    }
+    Bucket& operator=(const Bucket& other)
+    {
+      if (&other == this)
+          return *this;
+      local_depth_ = other.local_depth_;
+      items_ = other.items_;
+      return *this;
+    }
+  };
+  
   // add your own member variables here
+  int global_depth_;
+  size_t bucket_size_;
+  std::mutex mu_;
+  std::vector<std::shared_ptr<Bucket>> hashtable_;
 };
 } // namespace cmudb

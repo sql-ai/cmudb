@@ -48,7 +48,47 @@ BufferPoolManager::~BufferPoolManager()
  * 4. Update page metadata, read page content from disk file and return page
  * pointer
  */
-Page *BufferPoolManager::FetchPage(page_id_t page_id) { return nullptr; }
+Page *BufferPoolManager::FetchPage(page_id_t page_id)
+{
+  if (page_id == INVALID_PAGE_ID)
+  {
+    return nullptr;
+  }
+
+  Page *page;
+  if (page_table_->Find(page_id, page))
+  {
+    return page;
+  }
+
+  if (free_list_->size() > 0)
+  {
+    page = free_list_->front();
+    free_list_->pop_front();
+  }
+  else
+  {
+    if (replacer_->Victim(page))
+    {
+      if (page->is_dirty_)
+      {
+        disk_manager_.WritePage(page->page_id_, page->data_);
+        page->is_dirty_ = false;
+      }
+      page_table_->Remove(page->page_id_);
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
+
+  disk_manager_.ReadPage(page_id, page->data_);
+  page_table_->Insert(page_id, page);
+  page->page_id_ = page_id;
+  page->pin_count_++;
+  return page;
+}
 
 /*
  * Implementation of unpin page
@@ -58,7 +98,14 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) { return nullptr; }
  */
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty)
 {
-  return false;
+  Page *page;
+  if (!page_table_->Find(page_id, page) || page->pin_count_ <= 0)
+  {
+    return false;
+  }
+  replacer_->Insert(page);
+  page->is_dirty_ = is_dirty;
+  return true;
 }
 
 /*
@@ -67,12 +114,31 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty)
  * if page is not found in page table, return false
  * NOTE: make sure page_id != INVALID_PAGE_ID
  */
-bool BufferPoolManager::FlushPage(page_id_t page_id) { return false; }
+bool BufferPoolManager::FlushPage(page_id_t page_id)
+{
+  Page *page;
+  if (page_id == INVALID_PAGE_ID || !page_table_->Find(page_id, page))
+  {
+    return false;
+  }
+  disk_manager_.WritePage(page_id, page->data_);
+  return true;
+}
 
 /*
  * Used to flush all dirty pages in the buffer pool manager
  */
-void BufferPoolManager::FlushAllPages() {}
+void BufferPoolManager::FlushAllPages()
+{
+  for (unsigned int i = 0; i < pool_size_; i++)
+  {
+    const Page &page = pages_[0];
+    if (page.is_dirty_)
+    {
+      FlushPage(page.page_id_);
+    }
+  }
+}
 
 /**
  * User should call this method for deleting a page. This routine will call disk
@@ -83,7 +149,18 @@ void BufferPoolManager::FlushAllPages() {}
  * method to delete from disk file.
  * If the page is found within page table, but pin_count != 0, return false
  */
-bool BufferPoolManager::DeletePage(page_id_t page_id) { return false; }
+bool BufferPoolManager::DeletePage(page_id_t page_id)
+{
+  Page *page;
+  if (!page_table_->Find(page_id, page) || page->pin_count_ != 0)
+  {
+    return false;
+  }
+  page_table_->Remove(page_id);
+  free_list_->push_back(page);
+  disk_manager_.DeallocatePage(page_id);
+  return true;
+}
 
 /**
  * User should call this method if needs to create a new page. This routine
@@ -94,5 +171,11 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) { return false; }
  * table.
  * return nullptr is all the pages in pool are pinned
  */
-Page *BufferPoolManager::NewPage(page_id_t &page_id) { return nullptr; }
+Page *BufferPoolManager::NewPage(page_id_t &page_id)
+{
+  page_id = disk_manager_.AllocatePage();
+  Page *page = FetchPage(page_id);
+  return page;
+}
+
 } // namespace cmudb

@@ -12,6 +12,10 @@
 #include "buffer/replacer.h"
 #include "hash/extendible_hash.h"
 
+#include <deque>
+#include <unordered_map>
+#include <mutex>
+
 namespace cmudb
 {
 
@@ -34,6 +38,9 @@ public:
 
 private:
   // add your member variables here
+  std::deque<T> replacer_;
+  std::unordered_map<T, typename std::deque<T>::iterator> table_;
+  std::mutex mu_;
 };
 
 } // namespace cmudb
