@@ -412,14 +412,17 @@ __declspec(dllexport)
 /* Helpers */
 Schema *ParseCreateStatement(const std::string &sql_base)
 {
+
   std::string::size_type n;
   std::vector<Column> v;
   std::string column_name;
   std::string column_type;
   int column_length = 0;
   TypeId type = INVALID;
+
   // create a copy of the sql query
   std::string sql = sql_base;
+
   // prepocess, transform sql string into lower case
   std::transform(sql.begin(), sql.end(), sql.begin(), ::tolower);
   std::vector<std::string> tok = StringUtility::Split(sql, ',');
@@ -432,6 +435,7 @@ Schema *ParseCreateStatement(const std::string &sql_base)
     n = t.find_first_of(' ');
     column_name = t.substr(0, n);
     column_type = t.substr(n + 1);
+
     // deal with varchar(size) situation
     n = column_type.find_first_of('(');
     if (n != std::string::npos)
@@ -468,6 +472,7 @@ Schema *ParseCreateStatement(const std::string &sql_base)
       type = VARCHAR;
       column_length = (column_length == 0) ? 32 : column_length;
     }
+
     // construct each column
     if (type == INVALID)
     {

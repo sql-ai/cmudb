@@ -12,17 +12,20 @@ namespace cmudb
 /**
  * Record related
  */
-bool HeaderPage::InsertRecord(const std::string &name,
-                              const page_id_t root_id)
+bool HeaderPage::InsertRecord(
+    const std::string &name,
+    const page_id_t root_id)
 {
   assert(name.length() < 32);
   assert(root_id > INVALID_PAGE_ID);
 
   int record_num = GetRecordCount();
   int offset = 4 + record_num * 36;
+
   // check for duplicate name
   if (FindRecord(name) != -1)
     return false;
+
   // copy record content
   memcpy(GetData() + offset, name.c_str(), (name.length() + 1));
   memcpy((GetData() + offset + 32), &root_id, 4);
@@ -31,7 +34,8 @@ bool HeaderPage::InsertRecord(const std::string &name,
   return true;
 }
 
-bool HeaderPage::DeleteRecord(const std::string &name)
+bool HeaderPage::DeleteRecord(
+    const std::string &name)
 {
   int record_num = GetRecordCount();
   assert(record_num > 0);
@@ -82,7 +86,10 @@ bool HeaderPage::GetRootId(const std::string &name, page_id_t &root_id)
  * helper functions
  */
 // record count
-int HeaderPage::GetRecordCount() { return *reinterpret_cast<int *>(GetData()); }
+int HeaderPage::GetRecordCount()
+{
+  return *reinterpret_cast<int *>(GetData());
+}
 
 void HeaderPage::SetRecordCount(int record_count)
 {

@@ -21,6 +21,13 @@
 namespace cmudb
 {
 
+enum class TreeOperation
+{
+  Search,
+  Insert,
+  Delete
+};
+
 #define BPLUSTREE_TYPE BPlusTree<KeyType, ValueType, KeyComparator>
 // Main class providing the API for the Interactive B+ Tree.
 INDEX_TEMPLATE_ARGUMENTS
@@ -61,11 +68,14 @@ public:
   void RemoveFromFile(const std::string &file_name,
                       Transaction *transaction = nullptr);
   // expose for test purpose
-  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key,
-                                           bool leftMost = false);
+  B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(
+      const KeyType &key,
+      Transaction *transaction = nullptr,
+      TreeOperation op_type = TreeOperation::Search,
+      bool leftMost = false);
 
 private:
-  void StartNewTree(const KeyType &key, const ValueType &value);
+  void StartNewTree(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr);
 
   bool InsertIntoLeaf(const KeyType &key, const ValueType &value,
                       Transaction *transaction = nullptr);
@@ -93,11 +103,23 @@ private:
 
   void UpdateRootPageId(int insert_record = false);
 
+  void ReleaseAllLatches(
+      Transaction *transaction,
+      TreeOperation op_type = TreeOperation::Search,
+      bool dirty = false);
+
   // member variable
   std::string index_name_;
-  page_id_t root_page_id_;
+
+  std::atomic<page_id_t> root_page_id_;
+
   BufferPoolManager *buffer_pool_manager_;
+
   KeyComparator comparator_;
+
+  mutable std::mutex mutex_; //protect root_page_id_
+
+  using BPlusTreeParentPage = BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>;
 };
 
 } // namespace cmudb

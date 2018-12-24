@@ -21,10 +21,15 @@ TEST(BPlusTreeTests, InsertTest1)
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
+
   BufferPoolManager *bpm = new BufferPoolManager(50, "test.db");
+
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -59,7 +64,8 @@ TEST(BPlusTreeTests, InsertTest1)
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     auto location = (*iterator).second;
@@ -80,11 +86,16 @@ TEST(BPlusTreeTests, InsertTest2)
 {
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
+
   GenericComparator<8> comparator(key_schema);
   BufferPoolManager *bpm = new BufferPoolManager(50, "test.db");
+
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -155,11 +166,16 @@ TEST(BPlusTreeTests, DeleteTest1)
   Schema *key_schema = ParseCreateStatement(createStmt);
   GenericComparator<8> comparator(key_schema);
   BufferPoolManager *bpm = new BufferPoolManager(50, "test.db");
+
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
   GenericKey<8> index_key;
   RID rid;
+
   // create transaction
   Transaction *transaction = new Transaction(0);
 
@@ -192,7 +208,8 @@ TEST(BPlusTreeTests, DeleteTest1)
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     auto location = (*iterator).second;
@@ -214,7 +231,8 @@ TEST(BPlusTreeTests, DeleteTest1)
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     auto location = (*iterator).second;
@@ -237,10 +255,16 @@ TEST(BPlusTreeTests, DeleteTest2)
   // create KeyComparator and index schema
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
-  BufferPoolManager *bpm = new BufferPoolManager(50, "test.db");
+  BufferPoolManager *bpm = new BufferPoolManager(
+      50,
+      "test.db");
+
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
   GenericKey<8> index_key;
   RID rid;
   // create transaction
@@ -275,7 +299,9 @@ TEST(BPlusTreeTests, DeleteTest2)
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     auto location = (*iterator).second;
@@ -297,7 +323,8 @@ TEST(BPlusTreeTests, DeleteTest2)
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     auto location = (*iterator).second;
@@ -321,13 +348,19 @@ TEST(BPlusTreeTests, ScaleTest)
   Schema *key_schema = ParseCreateStatement("a bigint");
   GenericComparator<8> comparator(key_schema);
   BufferPoolManager *bpm = new BufferPoolManager(30, "test.db");
+
   // create b+ tree
-  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
-                                                           comparator);
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
   GenericKey<8> index_key;
   RID rid;
+
   // create transaction
   Transaction *transaction = new Transaction(0);
+
   // create and fetch header_page
   page_id_t page_id;
   auto header_page = bpm->NewPage(page_id);
@@ -340,13 +373,16 @@ TEST(BPlusTreeTests, ScaleTest)
     keys.push_back(key);
   }
 
+  // std::random_shuffle(keys.begin(), keys.end());
   for (auto key : keys)
   {
     int64_t value = key & 0xFFFFFFFF;
     rid.Set((int32_t)(key >> 32), value);
     index_key.SetFromInteger(key);
+    // std::cout << key << std::endl;
     tree.Insert(index_key, rid, transaction);
   }
+
   std::vector<RID> rids;
   for (auto key : keys)
   {
@@ -362,7 +398,9 @@ TEST(BPlusTreeTests, ScaleTest)
   int64_t start_key = 1;
   int64_t current_key = start_key;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     current_key = current_key + 1;
@@ -375,6 +413,7 @@ TEST(BPlusTreeTests, ScaleTest)
   {
     remove_keys.push_back(key);
   }
+
   // std::random_shuffle(remove_keys.begin(), remove_keys.end());
   for (auto key : remove_keys)
   {
@@ -386,7 +425,8 @@ TEST(BPlusTreeTests, ScaleTest)
   current_key = start_key;
   int64_t size = 0;
   index_key.SetFromInteger(start_key);
-  for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
+  for (auto iterator = tree.Begin(index_key);
+       iterator.isEnd() == false;
        ++iterator)
   {
     current_key = current_key + 1;
@@ -400,4 +440,62 @@ TEST(BPlusTreeTests, ScaleTest)
   delete transaction;
   remove("test.db");
 }
+
+TEST(BPlusTreeTests, RandomScaleTest)
+{
+  // create KeyComparator and index schema
+  Schema *key_schema = ParseCreateStatement("a bigint");
+  GenericComparator<8> comparator(key_schema);
+  BufferPoolManager *bpm = new BufferPoolManager(30, "random_test.db");
+
+  // create b+ tree
+  BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree(
+      "foo_pk",
+      bpm,
+      comparator);
+
+  GenericKey<8> index_key;
+  RID rid;
+
+  // create transaction
+  Transaction *transaction = new Transaction(0);
+
+  // create and fetch header_page
+  page_id_t page_id;
+  auto header_page = bpm->NewPage(page_id);
+  (void)header_page;
+
+  string testDataFileName{"/home/td/cmuDB/scale_test_data.txt"};
+  ifstream testDataStream(testDataFileName);
+  istream_iterator<unsigned int> start(testDataStream), eos;
+  vector<int64_t> keys(start, eos);
+  testDataStream.close();
+
+  for (auto key : keys)
+  {
+    int64_t value = key & 0xFFFFFFFF;
+    rid.Set((int32_t)(key >> 32), value);
+    index_key.SetFromInteger(key);
+    // std::cout << key << std::endl;
+    tree.Insert(index_key, rid, transaction);
+  }
+
+  std::vector<RID> rids;
+  for (auto key : keys)
+  {
+    rids.clear();
+    index_key.SetFromInteger(key);
+    tree.GetValue(index_key, rids);
+    EXPECT_EQ(rids.size(), 1);
+
+    int64_t value = key & 0xFFFFFFFF;
+    EXPECT_EQ(rids[0].GetSlotNum(), value);
+  }
+
+  bpm->UnpinPage(HEADER_PAGE_ID, true);
+  delete bpm;
+  delete transaction;
+  remove("random_test.db");
+}
+
 } // namespace cmudb

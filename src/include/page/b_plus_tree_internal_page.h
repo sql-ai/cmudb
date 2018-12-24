@@ -2,8 +2,10 @@
  * b_plus_tree_internal_page.h
  *
  * Store n indexed keys and n+1 child pointers (page_id) within internal page.
+ * 
  * Pointer PAGE_ID(i) points to a subtree in which all keys K satisfy:
  * K(i) <= K < K(i+1).
+ * 
  * NOTE: since the number of keys does not equal to number of child pointers,
  * the first key always remains invalid. That is to say, any search/lookup
  * should ignore the first key.
@@ -12,6 +14,19 @@
  *  --------------------------------------------------------------------------
  * | HEADER | KEY(1)+PAGE_ID(1) | KEY(2)+PAGE_ID(2) | ... | KEY(n)+PAGE_ID(n) |
  *  --------------------------------------------------------------------------
+ * 
+ * Header format (size in byte, 24 bytes in total):
+ * ----------------------------------------------------------------------------
+ * |PageType(4)|CurrentSize(4)|MaxSize(4)|ParentPageId(4)|PageId(4)|LogSeqNo(4)|
+ * ----------------------------------------------------------------------------
+ * 
+ * Type         4   Page Type (internal or leaf)
+ * Size         4   Number of Key & Value pairs in page
+ * max_size     4   Max number of Key & Value pairs in page
+ * parent_id    4   Parent Page Id
+ * page_id      4   Self Page Id
+ * lsn          4   Log sequence Number
+ * 
  */
 
 #pragma once
@@ -35,8 +50,12 @@ public:
 
   KeyType KeyAt(int index) const;
   void SetKeyAt(int index, const KeyType &key);
+
   int ValueIndex(const ValueType &value) const;
   ValueType ValueAt(int index) const;
+  void SetValueAt(
+      int index,
+      const ValueType &v);
 
   ValueType Lookup(const KeyType &key, const KeyComparator &comparator) const;
   void PopulateNewRoot(const ValueType &old_value, const KeyType &new_key,
@@ -48,8 +67,10 @@ public:
 
   void MoveHalfTo(BPlusTreeInternalPage *recipient,
                   BufferPoolManager *buffer_pool_manager);
-  void MoveAllTo(BPlusTreeInternalPage *recipient, int index_in_parent,
-                 BufferPoolManager *buffer_pool_manager);
+  void MoveAllTo(BPlusTreeInternalPage *recipient,
+                 int index_in_parent,
+                 BufferPoolManager *buffer_pool_manager,
+                 const KeyComparator &comparator);
   void MoveFirstToEndOf(BPlusTreeInternalPage *recipient,
                         BufferPoolManager *buffer_pool_manager);
   void MoveLastToFrontOf(BPlusTreeInternalPage *recipient,

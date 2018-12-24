@@ -84,7 +84,10 @@ void DiskManager::ReadPage(page_id_t page_id, char *page_data)
  * Allocate new page (operations like create index/table)
  * For now just keep an increasing counter
  */
-page_id_t DiskManager::AllocatePage() { return next_page_id_++; }
+page_id_t DiskManager::AllocatePage()
+{
+  return next_page_id_++;
+}
 
 /**
  * Deallocate page (operations like drop index/table)

@@ -44,11 +44,14 @@ TEST(BptTreeTest, UnitTest)
   bool verbose = false;
 
   std::cout << usageMessage();
+
   // create KeyComparator and index schema
   std::string createStmt = "a bigint";
   Schema *key_schema = ParseCreateStatement(createStmt);
+
   GenericComparator<8> comparator(key_schema);
   BufferPoolManager *bpm = new BufferPoolManager(100, "test.db");
+
   // create and fetch header_page
   page_id_t page_id;
   auto header_page = bpm->NewPage(page_id);

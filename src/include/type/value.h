@@ -19,8 +19,10 @@ inline CmpBool GetCmpBool(bool boolean)
   return boolean ? CMP_TRUE : CMP_FALSE;
 }
 
-// A value is an abstract class that represents a view over SQL data stored in
-// some materialized state. All values have a type and comparison functions, but
+// A value is an abstract class that represents a view over SQL data
+// stored in some materialized state.
+//
+// All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
 class Value
 {
@@ -44,17 +46,21 @@ public:
   }
   // BOOLEAN and TINYINT
   Value(TypeId type, int8_t val);
+
   // DECIMAL
   Value(TypeId type, double d);
   Value(TypeId type, float f);
+
   // SMALLINT
   Value(TypeId type, int16_t i);
   // INTEGER
   Value(TypeId type, int32_t i);
   // BIGINT
   Value(TypeId type, int64_t i);
+
   // TIMESTAMP
   Value(TypeId type, uint64_t i);
+
   // VARCHAR
   Value(TypeId type, const char *data, uint32_t len, bool manage_data);
   Value(TypeId type, const std::string &data);
@@ -63,6 +69,7 @@ public:
   Value(const Value &other);
   Value &operator=(Value other);
   ~Value();
+
   // nothrow
   friend void swap(Value &first, Value &second)
   {
@@ -71,6 +78,7 @@ public:
     std::swap(first.manage_data_, second.manage_data_);
     std::swap(first.type_id_, second.type_id_);
   }
+
   // check whether value is integer
   bool CheckInteger() const;
   bool CheckComparable(const Value &o) const;
@@ -83,6 +91,7 @@ public:
   {
     return Type::GetInstance(type_id_)->GetLength(*this);
   }
+
   // Access the raw variable length data
   inline const char *GetData() const
   {
@@ -211,6 +220,7 @@ protected:
   } size_;
 
   bool manage_data_;
+
   // The data type
   TypeId type_id_;
 };

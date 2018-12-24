@@ -103,7 +103,9 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id)
  * if pin_count<=0 before this call, return false.
  * is_dirty: set the dirty flag of this page
  */
-bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty)
+bool BufferPoolManager::UnpinPage(
+    page_id_t page_id,
+    bool is_dirty)
 {
 
   Page *page_ptr = nullptr;
@@ -204,14 +206,17 @@ bool BufferPoolManager::DeletePage(page_id_t page_id)
 /**
  * User should call this method if needs to create a new page. This routine
  * will call disk manager to allocate a page.
+ * 
  * Buffer pool manager should be responsible to choose a victim page either from
  * free list or lru replacer(NOTE: always choose from free list first), update
  * new page's metadata, zero out memory and add corresponding entry into page
  * table.
+ * 
  * return nullptr if all the pages in pool are pinned
  */
 Page *BufferPoolManager::NewPage(page_id_t &page_id)
 {
+  // std::lock_guard<std::mutex> guard(latch_);
 
   // return nullptr if all the pages in pool are pinned
   if (free_list_->empty() && replacer_->Size() == 0)
@@ -220,7 +225,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id)
   }
 
   Page *page_ptr = nullptr;
-  page_id = disk_manager_.AllocatePage();
+
   if (!free_list_->empty())
   {
     page_ptr = free_list_->front();
@@ -235,14 +240,20 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id)
 
     if (page_ptr->is_dirty_)
     {
-      disk_manager_.WritePage(page_ptr->GetPageId(), page_ptr->GetData());
+      disk_manager_.WritePage(
+          page_ptr->GetPageId(),
+          page_ptr->GetData());
+
       page_ptr->is_dirty_ = false;
     }
+
     page_table_->Remove(page_ptr->GetPageId());
   }
 
-  page_ptr->ResetMemory();
+  page_id = disk_manager_.AllocatePage();
   page_table_->Insert(page_id, page_ptr);
+
+  page_ptr->ResetMemory();
   page_ptr->page_id_ = page_id;
   page_ptr->pin_count_ += 1;
   return page_ptr;

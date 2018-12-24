@@ -94,6 +94,7 @@ public:
       if (lhs_value.CompareGreaterThan(rhs_value) == CMP_TRUE)
         return 1;
     }
+
     // equals
     return 0;
   }
@@ -104,7 +105,8 @@ public:
   }
 
   // constructor
-  GenericComparator(Schema *key_schema) : key_schema_(key_schema) {}
+  GenericComparator(Schema *key_schema)
+      : key_schema_(key_schema) {}
 
 private:
   Schema *key_schema_;

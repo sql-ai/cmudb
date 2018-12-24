@@ -31,5 +31,7 @@
 *.out
 *.app
 
+# project specific 
 build/
 .vscode/
+*.db
