@@ -21,8 +21,6 @@ class TableHeap
 public:
   ~TableHeap()
   {
-    // when destruct table heap, flush all pages within buffer pool
-    buffer_pool_manager_->FlushAllPages();
   }
 
   // open/create a table heap, create table if first_page_id is not passed

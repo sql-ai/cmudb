@@ -82,7 +82,8 @@ namespace cmudb
 class BufferPoolManager
 {
 public:
-  BufferPoolManager(size_t pool_size, const std::string &db_file);
+  BufferPoolManager(size_t pool_size,
+                    const std::string &db_file);
 
   ~BufferPoolManager();
 
@@ -91,8 +92,6 @@ public:
   bool UnpinPage(page_id_t page_id, bool is_dirty);
 
   bool FlushPage(page_id_t page_id);
-
-  void FlushAllPages();
 
   Page *NewPage(page_id_t &page_id);
 
@@ -103,14 +102,15 @@ private:
   // array of pages
   Page *pages_;
   DiskManager disk_manager_;
-  // to keep track of page id and its memory location
   HashTable<page_id_t, Page *> *page_table_;
-  // to collect unpinned pages for replacement
   Replacer<Page *> *replacer_;
-  // to collect free pages for replacement
   std::list<Page *> *free_list_;
-  // to protect shared data structure, you may need it for synchronization
-  // between replacer and page table
   std::mutex latch_;
+
+  void PinPage(Page *p)
+  {
+    p->pin_count_++;
+  }
 };
+
 } // namespace cmudb
