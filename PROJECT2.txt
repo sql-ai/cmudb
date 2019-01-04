@@ -1,0 +1,88 @@
+Overview:
+-implement index in database system 
+-fast data retrieval 
+-fast random lookups
+-fast ordered access 
+-internal pages direct, leaf pages contain data
+-grows + shrinks dynamically 
+
+Project Specs
+ignore transaction, no need to implement stuff w it 
+
+Task #1 - B+Tree Pages 
+
+Parent Page
+- parent to both internal + leaf
+- divided into fields w/ MOST sig. byte 1st (all 4 bytes)
+    - type : page type (internal/leaf)
+    - size: # of key+val pairs in page 
+    - max_size
+    - parent_id
+    - page_id 
+modify ONLY src/include/page/b_plus_tree_page.h AND src/page/b_plus_tree_page.cpp
+
+Internal Page
+- doesn't store any real data 
+- stores (m) key entries + (m+1) child pointers (page_id)
+    - 1st key = INVALID, lookup START w/ 2nd key 
+- always half full
+
+Leaf Page 
+- m key and values 
+- value: 64-bit record_id : locates where actual tuples are: 
+    - RID class src/include/common/rid.h
+
+IMPORTANT: 
+- internal & leaf have diff value types: max_size could be dif
+    -CALCULATE max_size in Init()
+
+each page corresponds to the CONTENT of mem page 
+BEFORE read/write page, FETCH page from buffer pool using page_id
+THEN reinterpret cast to page, and UNPIN after reading/writing 
+
+Task #2 - B+Tree Data Structure 
+-B+ Tree Index only supports UNIQUE keys 
+    - duplicated key doesn't perform insert + returns false
+-split when needed 
+    - update root_page_id in src/include/page/header_page.h when changed 
+    - ^ just call UpdateRootPageId() in BPlusTree class 
+Classes already implemented:
+- KeyType: always GenericKey w template argument 
+- ValueType: only 64-bit RID 
+- KeyComparator: compare KeyType as > or < 
+
+Task #3 - Index Iterator 
+-GENERAL PURPOSE index iterator 
+-to retrieve all leaf pages EFFICIENTLY 
+-organize into single linked list, traverse key/val pairs
+-follow function of Iterator in c++11 (w at least increment + deref operators)
+
+-in index folder, only header + source 
+
+must have 3 funcs:
+- isEnd(): last pair?
+- operator++()
+- operator*()
+
+DEV TIPS:
+when you try to delete a page, the page_count must equals to 0.
+Using small value of page size at the beginning test
+change the page size in configuration file (src/include/common/config.h).
+
+
+  BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *parent_page;
+  page_id_t parent_id = GetParentPageId();
+  Page *page = buffer_pool_manager->FetchPage(parent_id);
+  page->WLatch();
+  parent_page = reinterpret_cast<BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *>(page);
+  for (int i = 0; i < GetSize(); ++i)
+  {
+    recipient->IncreaseSize(1);
+    recipient->array[recipient->GetSize() - 1] = array[i];
+  }
+  SetSize(0);
+  recipient->SetNextPageId(next_page_id_);
+
+  parent_page->Remove(index_in_parent);
+  buffer_pool_manager->UnpinPage(parent_id, true);
+  page->WUnlatch();

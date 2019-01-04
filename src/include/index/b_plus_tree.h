@@ -9,7 +9,6 @@
  * (4) Implement index iterator for range scan
  */
 #pragma once
-
 #include <queue>
 #include <vector>
 

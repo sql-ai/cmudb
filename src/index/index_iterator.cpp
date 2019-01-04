@@ -8,15 +8,17 @@
 namespace cmudb
 {
 
-/*
- * NOTE: you can change the destructor/constructor method here
- * set your own input parameters
- */
 INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::IndexIterator() {}
-
-INDEX_TEMPLATE_ARGUMENTS
-INDEXITERATOR_TYPE::~IndexIterator() {}
+INDEXITERATOR_TYPE::IndexIterator(
+    BufferPoolManager &buffer_pool_manager,
+    B_PLUS_TREE_LEAF_PAGE_TYPE *leaf_page,
+    int position)
+    : buffer_pool_manager_(buffer_pool_manager),
+      leaf_page_(leaf_page),
+      position_(position),
+      is_end_(false)
+{
+}
 
 template class IndexIterator<GenericKey<4>, RID, GenericComparator<4>>;
 template class IndexIterator<GenericKey<8>, RID, GenericComparator<8>>;
